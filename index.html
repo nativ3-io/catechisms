@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Flashcard App</h1>
+    </div>
+
+    <div class="dropdown">
+        <select id="category-select"></select>
+    </div>
+
+    <div class="flashcard">
+        <div class="flashcard-inner">
+            <div class="flashcard-content flashcard-front">
+                Q: Who made you?
+            </div>
+            <div class="flashcard-content flashcard-back">
+                <div id="answer-content" class="question-row">A: God.</div>
+                <div class="main-area">
+                    <div id="question-content" >Q: Who made you?</div>
+                    <div class="multiple-choice" id="multiple-choice" style="display: none;"></div>
+                    <div class="first-letter" id="first-letter" style="display: none;"></div>
+                    <div class="jeopardy-mode" id="jeopardy-mode" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button id="prev-btn" disabled>Previous</button>
+        <button id="multiple-choice-btn">Multiple Choice</button>
+        <button id="first-letter-btn">First Letter</button>
+        <button id="jeopardy-btn">Jeopardy Mode</button>
+        <button id="show-answer-btn">Show Answer</button>
+        <button id="next-btn">Next</button>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script src="app.js" type="module"></script>
+</body>
+</html>
