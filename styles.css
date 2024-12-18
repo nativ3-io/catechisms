@@ -22,7 +22,7 @@ body {
     width: 300px;
     height: 200px;
     position: relative;
-    perspective: 1000px;
+    perspective: 1000px; /* Enables 3D effect */
     cursor: pointer;
 }
 
@@ -30,7 +30,7 @@ body {
     width: 100%;
     height: 100%;
     position: absolute;
-    transition: transform 0.6s ease-in-out;
+    transition: transform 0.6s;
     transform-style: preserve-3d;
     transform: rotateY(0deg);
 }
@@ -52,38 +52,15 @@ body {
     text-align: center;
 }
 
-.flashcard-back {
-    background-color: #FFC107;
-    color: black;
-    transform: rotateY(180deg);
-    backface-visibility: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-}
-
 .flashcard-front {
     background-color: #007BFF;
     color: white;
 }
 
-.question-row {
-    font-weight: bold;
-    font-size: 16px;
-    margin-bottom: 15px;
-    text-align: center;
-    width: 100%;
-}
-
-.main-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+.flashcard-back {
+    background-color: #FFC107;
+    color: black;
+    transform: rotateY(180deg);
 }
 
 .navigation {
@@ -107,14 +84,22 @@ body {
     cursor: not-allowed;
 }
 
-.multiple-choice,
-.jeopardy-mode {
+.multiple-choice {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin-top: 10px;
 }
 
+.multiple-choice button {
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #FFD700;
+    color: black;
+}
 .notification {
     position: fixed;
     top: 50%;
@@ -135,4 +120,65 @@ body {
 
 .notification.incorrect {
     background-color: red;
+}
+
+.flashcard {
+    position: relative;
+    display: inline-block;
+    text-align: center;
+    margin: 20px;
+}
+
+.flashcard-back {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 10px;
+    text-align: center;
+}
+
+#question-content {
+    margin-bottom: 15px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.multiple-choice button {
+    margin: 5px 0;
+}
+
+.first-letter span {
+    cursor: pointer;
+    padding: 0 5px;
+    border-bottom: 1px dashed #007BFF;
+    color: #007BFF;
+}
+
+.first-letter span.revealed {
+    color: black;
+    border-bottom: none;
+}
+
+.navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.nav-top {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.nav-left,
+.nav-right {
+    width: auto;
+}
+
+.nav-bottom {
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
 }

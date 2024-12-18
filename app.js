@@ -1,65 +1,121 @@
-import { childrenCatechism } from './childrenCatechism.js';
-import { puritanCatechism } from './puritanCatechism.js';
-import { children2Catechism } from './children2Catechism.js';
-
-const catechismFiles = {
-    children: childrenCatechism,
-    puritan: puritanCatechism,
-    children2: children2Catechism,
+const data = {
+    children: [
+        { question: "Who made you?", answer: "God." },
+        { question: "What else did God make?", answer: "God made all things." },
+        { question: "Why did God make you and all things?", answer: "For his own glory." },
+        { question: "How can you glorify God?", answer: "By loving him and doing what he commands." },
+        { question: "Why ought you to glorify God?", answer: "Because he made me and takes care of me." }
+    ],
+    puritan: [
+        { question: "What is the chief end of man?", answer: "Man's chief end is to glorify God, and to enjoy him forever." },
+        { question: "What rule has God given to direct us how we may glorify him?", answer: "The Word of God which is contained in the Scriptures of the Old and New Testaments is the only rule to direct us how we may glorify God and enjoy him." },
+        { question: "What do the Scriptures principally teach?", answer: "The Scriptures principally teach what man is to believe concerning God, and what duty God requires of man." },
+        { question: "What is God?", answer: "God is Spirit, infinite, eternal, and unchangeable in his being, wisdom, power, holiness, justice, goodness, and truth." },
+        { question: "Are there more Gods than one?", answer: "There is but one only, the living and true God." }
+    ]
 };
 
 const flashcard = document.querySelector('.flashcard');
 const front = document.querySelector('.flashcard-front');
-const answerContent = document.getElementById('answer-content');
+const back = document.querySelector('.flashcard-back');
 const questionContent = document.getElementById('question-content');
-const multipleChoiceContainer = document.getElementById('multiple-choice');
-const firstLetterContainer = document.getElementById('first-letter');
-const jeopardyContainer = document.getElementById('jeopardy-mode');
-const categorySelect = document.getElementById('category-select');
+const answerContent = document.getElementById('answer-content');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 const multipleChoiceBtn = document.getElementById('multiple-choice-btn');
 const firstLetterBtn = document.getElementById('first-letter-btn');
-const jeopardyBtn = document.getElementById('jeopardy-btn');
 const showAnswerBtn = document.getElementById('show-answer-btn');
+const multipleChoiceContainer = document.getElementById('multiple-choice');
+const firstLetterContainer = document.getElementById('first-letter');
 const notification = document.getElementById('notification');
 
 let currentCategory = 'children';
 let currentIndex = 0;
+let isTesting = false;
 
-function populateDropdown() {
-    categorySelect.innerHTML = '';
-    Object.keys(catechismFiles).forEach((category) => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-        categorySelect.appendChild(option);
-    });
-}
+document.getElementById('category-select').addEventListener('change', () => {
+    currentCategory = event.target.value;
+    currentIndex = 0;
+    resetCard();
+    updateFlashcard();
+});
+
+flashcard.addEventListener('click', () => {
+    if (!isTesting) flashcard.classList.toggle('flip');
+});
+
+prevBtn.addEventListener('click', () => {
+    if (currentIndex > 0) {
+        currentIndex--;
+        resetCard();
+        updateFlashcard();
+    }
+});
+
+nextBtn.addEventListener('click', () => {
+    const categoryData = data[currentCategory];
+    if (currentIndex < categoryData.length - 1) {
+        currentIndex++;
+        resetCard();
+        updateFlashcard();
+    }
+});
+
+multipleChoiceBtn.addEventListener('click', () => {
+    isTesting = true;
+    generateMultipleChoice();
+    toggleBackContent('multiple-choice');
+});
+
+firstLetterBtn.addEventListener('click', () => {
+    isTesting = true;
+    generateFirstLetter();
+    toggleBackContent('first-letter');
+});
+
+showAnswerBtn.addEventListener('click', () => {
+    resetCard();
+    flashcard.classList.add('flip');
+    toggleBackContent('answer');
+    isTesting = false;
+});
 
 function updateFlashcard() {
-    const categoryData = catechismFiles[currentCategory];
+    if (!data[currentCategory]) {
+        console.error(`Invalid category: ${currentCategory}`);
+        return;
+    }
+
+    const categoryData = data[currentCategory];
+    if (currentIndex < 0 || currentIndex >= categoryData.length) {
+        console.error(`Invalid index: ${currentIndex}`);
+        return;
+    }
+
     const currentCard = categoryData[currentIndex];
     front.textContent = `Q: ${currentCard.question}`;
+    questionContent.textContent = `Q: ${currentCard.question}`;
     answerContent.textContent = `A: ${currentCard.answer}`;
+
+    toggleBackContent('answer');
+
     prevBtn.disabled = currentIndex === 0;
     nextBtn.disabled = currentIndex === categoryData.length - 1;
 }
 
-function toggleBackContent(type) {
-    multipleChoiceContainer.style.display = 'none';
-    firstLetterContainer.style.display = 'none';
-    jeopardyContainer.style.display = 'none';
-    answerContent.style.display = 'none';
 
-    if (type === 'multiple-choice') multipleChoiceContainer.style.display = 'grid';
-    if (type === 'first-letter') firstLetterContainer.style.display = 'block';
-    if (type === 'jeopardy-mode') jeopardyContainer.style.display = 'grid';
-    if (type === 'answer') answerContent.style.display = 'block';
+function resetCard() {
+    flashcard.classList.remove('flip');
+}
+
+function toggleBackContent(type) {
+    multipleChoiceContainer.style.display = type === 'multiple-choice' ? 'grid' : 'none';
+    firstLetterContainer.style.display = type === 'first-letter' ? 'block' : 'none';
+    answerContent.style.display = type === 'answer' ? 'block' : 'none';
 }
 
 function generateMultipleChoice() {
-    const categoryData = catechismFiles[currentCategory];
+    const categoryData = data[currentCategory];
     const currentCard = categoryData[currentIndex];
 
     const answers = [currentCard.answer];
@@ -79,11 +135,13 @@ function generateMultipleChoice() {
         button.textContent = answer;
         button.addEventListener('click', () => {
             const isCorrect = answer === currentCard.answer;
-            showNotification(isCorrect ? 'Correct!' : 'Incorrect!');
+            showNotification(isCorrect ? "Correct!" : "Incorrect!", isCorrect);
+
             if (isCorrect) {
                 setTimeout(() => {
                     if (currentIndex < categoryData.length - 1) {
                         currentIndex++;
+                        resetCard();
                         updateFlashcard();
                     }
                 }, 1500);
@@ -91,13 +149,10 @@ function generateMultipleChoice() {
         });
         multipleChoiceContainer.appendChild(button);
     });
-
-    flashcard.classList.add('flip');
-    toggleBackContent('multiple-choice');
 }
 
 function generateFirstLetter() {
-    const categoryData = catechismFiles[currentCategory];
+    const categoryData = data[currentCategory];
     const currentCard = categoryData[currentIndex];
 
     const words = currentCard.answer.split(' ');
@@ -113,89 +168,18 @@ function generateFirstLetter() {
         firstLetterContainer.appendChild(span);
         firstLetterContainer.appendChild(document.createTextNode(' '));
     });
-
-    flashcard.classList.add('flip');
-    toggleBackContent('first-letter');
 }
 
-function generateJeopardyMode() {
-    const categoryData = catechismFiles[currentCategory];
-    const currentCard = categoryData[currentIndex];
 
-    answerContent.textContent = `A: ${currentCard.answer}`;
-    questionContent.style.display = 'none';
-
-    jeopardyContainer.innerHTML = '';
-    const questions = [currentCard.question];
-    while (questions.length < 4) {
-        const randomIndex = Math.floor(Math.random() * categoryData.length);
-        const randomQuestion = categoryData[randomIndex].question;
-        if (!questions.includes(randomQuestion)) {
-            questions.push(randomQuestion);
-        }
-    }
-
-    questions.sort(() => Math.random() - 0.5);
-    questions.forEach((question) => {
-        const button = document.createElement('button');
-        button.textContent = question;
-        button.addEventListener('click', () => {
-            const isCorrect = question === currentCard.question;
-            showNotification(isCorrect ? 'Correct!' : 'Incorrect!');
-        });
-        jeopardyContainer.appendChild(button);
-    });
-
-    flashcard.classList.add('flip');
-    toggleBackContent('jeopardy-mode');
+function revealWord(element, word) {
+    element.textContent = word;
+    element.classList.add('revealed');
 }
 
 function showNotification(message) {
     notification.textContent = message;
     notification.style.display = 'block';
-    setTimeout(() => {
-        notification.style.display = 'none';
-    }, 1500);
+    setTimeout(() => notification.style.display = 'none', 1500);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    populateDropdown();
-    updateFlashcard();
-
-    categorySelect.addEventListener('change', () => {
-        currentCategory = categorySelect.value;
-        currentIndex = 0;
-        updateFlashcard();
-    });
-
-    prevBtn.addEventListener('click', () => {
-        if (currentIndex > 0) {
-            currentIndex--;
-            updateFlashcard();
-        }
-    });
-
-    nextBtn.addEventListener('click', () => {
-        if (currentIndex < catechismFiles[currentCategory].length - 1) {
-            currentIndex++;
-            updateFlashcard();
-        }
-    });
-
-    multipleChoiceBtn.addEventListener('click', () => {
-        generateMultipleChoice();
-    });
-
-    firstLetterBtn.addEventListener('click', () => {
-        generateFirstLetter();
-    });
-
-    jeopardyBtn.addEventListener('click', () => {
-        generateJeopardyMode();
-    });
-
-    showAnswerBtn.addEventListener('click', () => {
-        flashcard.classList.add('flip');
-        toggleBackContent('answer');
-    });
-});
+updateFlashcard();

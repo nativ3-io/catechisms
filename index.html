@@ -5,6 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard App</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            text-align: center;
+            display: none;
+        }
+
+        .notification.correct {
+            background-color: green;
+        }
+
+        .notification.incorrect {
+            background-color: red;
+        }
+
+        .flashcard-back {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #question-content {
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .multiple-choice button {
+            margin: 5px 0;
+        }
+
+        .first-letter span {
+            cursor: pointer;
+            padding: 0 5px;
+            border-bottom: 1px dashed #007BFF;
+            color: #007BFF;
+        }
+
+        .first-letter span.revealed {
+            color: black;
+            border-bottom: none;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -12,7 +65,10 @@
     </div>
 
     <div class="dropdown">
-        <select id="category-select"></select>
+        <select id="category-select">
+            <option value="children">A Children's Catechism</option>
+            <option value="puritan">Puritan Catechism</option>
+        </select>
     </div>
 
     <div class="flashcard">
@@ -21,13 +77,10 @@
                 Q: Who made you?
             </div>
             <div class="flashcard-content flashcard-back">
-                <div id="answer-content" class="question-row">A: God.</div>
-                <div class="main-area">
-                    <div id="question-content" >Q: Who made you?</div>
-                    <div class="multiple-choice" id="multiple-choice" style="display: none;"></div>
-                    <div class="first-letter" id="first-letter" style="display: none;"></div>
-                    <div class="jeopardy-mode" id="jeopardy-mode" style="display: none;"></div>
-                </div>
+                <div id="question-content">Q: Who made you?</div>
+                <div id="answer-content" style="display: block;">A: God.</div>
+                <div class="multiple-choice" id="multiple-choice" style="display: none;"></div>
+                <div class="first-letter" id="first-letter" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -36,13 +89,196 @@
         <button id="prev-btn" disabled>Previous</button>
         <button id="multiple-choice-btn">Multiple Choice</button>
         <button id="first-letter-btn">First Letter</button>
-        <button id="jeopardy-btn">Jeopardy Mode</button>
         <button id="show-answer-btn">Show Answer</button>
         <button id="next-btn">Next</button>
     </div>
 
     <div class="notification" id="notification"></div>
 
-    <script src="app.js" type="module"></script>
+    <script>
+        const data = {
+            children: [
+                { question: "Who made you?", answer: "God." },
+                { question: "What else did God make?", answer: "God made all things." },
+                { question: "Why did God make you and all things?", answer: "For his own glory." },
+                { question: "How can you glorify God?", answer: "By loving him and doing what he commands." },
+                { question: "Why ought you to glorify God?", answer: "Because he made me and takes care of me." }
+            ],
+            puritan: [
+                { question: "What is the chief end of man?", answer: "Man's chief end is to glorify God, and to enjoy him forever." },
+                { question: "What rule has God given to direct us how we may glorify him?", answer: "The Word of God which is contained in the Scriptures of the Old and New Testaments is the only rule to direct us how we may glorify God and enjoy him." },
+                { question: "What do the Scriptures principally teach?", answer: "The Scriptures principally teach what man is to believe concerning God, and what duty God requires of man." },
+                { question: "What is God?", answer: "God is Spirit, infinite, eternal, and unchangeable in his being, wisdom, power, holiness, justice, goodness, and truth." },
+                { question: "Are there more Gods than one?", answer: "There is but one only, the living and true God." }
+            ]
+        };
+
+        const flashcard = document.querySelector('.flashcard');
+        const inner = document.querySelector('.flashcard-inner');
+        const front = document.querySelector('.flashcard-front');
+        const back = document.querySelector('.flashcard-back');
+        const questionContent = document.getElementById('question-content');
+        const answerContent = document.getElementById('answer-content');
+        const categorySelect = document.getElementById('category-select');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const multipleChoiceBtn = document.getElementById('multiple-choice-btn');
+        const firstLetterBtn = document.getElementById('first-letter-btn');
+        const showAnswerBtn = document.getElementById('show-answer-btn');
+        const multipleChoiceContainer = document.getElementById('multiple-choice');
+        const firstLetterContainer = document.getElementById('first-letter');
+        const notification = document.getElementById('notification');
+
+        let currentCategory = 'children';
+        let currentIndex = 0;
+        let isTesting = false;
+
+        categorySelect.addEventListener('change', () => {
+            currentCategory = categorySelect.value;
+            currentIndex = 0;
+            resetCard();
+            updateFlashcard();
+        });
+
+        flashcard.addEventListener('click', () => {
+            if (!isTesting) {
+                flashcard.classList.toggle('flip');
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                resetCard();
+                updateFlashcard();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            const categoryData = data[currentCategory];
+            if (currentIndex < categoryData.length - 1) {
+                currentIndex++;
+                resetCard();
+                updateFlashcard();
+            }
+        });
+
+        multipleChoiceBtn.addEventListener('click', () => {
+            isTesting = true;
+            generateMultipleChoice();
+            answerContent.style.display = 'none';
+            questionContent.style.display = 'block';
+            firstLetterContainer.style.display = 'none';
+            multipleChoiceContainer.style.display = 'grid';
+            flashcard.classList.add('flip');
+        });
+
+        firstLetterBtn.addEventListener('click', () => {
+            isTesting = true;
+            generateFirstLetter();
+            answerContent.style.display = 'none';
+            questionContent.style.display = 'block';
+            multipleChoiceContainer.style.display = 'none';
+            firstLetterContainer.style.display = 'block';
+            flashcard.classList.add('flip');
+        });
+
+        showAnswerBtn.addEventListener('click', () => {
+            resetCard();
+            flashcard.classList.add('flip');
+            answerContent.style.display = 'block';
+            questionContent.style.display = 'block';
+            multipleChoiceContainer.style.display = 'none';
+            firstLetterContainer.style.display = 'none';
+            isTesting = false;
+        });
+
+        function updateFlashcard() {
+            const categoryData = data[currentCategory];
+            const currentCard = categoryData[currentIndex];
+            front.textContent = `Q: ${currentCard.question}`;
+            questionContent.textContent = `Q: ${currentCard.question}`;
+            answerContent.textContent = `A: ${currentCard.answer}`;
+            answerContent.style.display = 'block';
+            questionContent.style.display = 'block';
+            multipleChoiceContainer.style.display = 'none';
+            firstLetterContainer.style.display = 'none';
+            isTesting = false;
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === categoryData.length - 1;
+        }
+
+        function resetCard() {
+            flashcard.classList.remove('flip');
+        }
+
+        function generateMultipleChoice() {
+            const categoryData = data[currentCategory];
+            const currentCard = categoryData[currentIndex];
+
+            const answers = [currentCard.answer];
+            while (answers.length < 4) {
+                const randomIndex = Math.floor(Math.random() * categoryData.length);
+                const randomAnswer = categoryData[randomIndex].answer;
+                if (!answers.includes(randomAnswer)) {
+                    answers.push(randomAnswer);
+                }
+            }
+
+            answers.sort(() => Math.random() - 0.5);
+
+            multipleChoiceContainer.innerHTML = '';
+            answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.textContent = answer;
+                button.addEventListener('click', () => {
+                    if (answer === currentCard.answer) {
+                        showNotification("Correct!", true);
+                        setTimeout(() => {
+                            if (currentIndex < categoryData.length - 1) {
+                                currentIndex++;
+                                resetCard();
+                                updateFlashcard();
+                            }
+                        }, 1500);
+                    } else {
+                        showNotification("Incorrect!", false);
+                    }
+                });
+                multipleChoiceContainer.appendChild(button);
+            });
+        }
+
+        function generateFirstLetter() {
+            const categoryData = data[currentCategory];
+            const currentCard = categoryData[currentIndex];
+
+            const words = currentCard.answer.split(' ');
+            firstLetterContainer.innerHTML = '';
+
+            words.forEach(word => {
+                const span = document.createElement('span');
+                span.textContent = `${word[0]}${'_'.repeat(word.length - 1)}`;
+                span.addEventListener('click', () => {
+                    span.textContent = word;
+                    span.classList.add('revealed');
+                });
+                firstLetterContainer.appendChild(span);
+                firstLetterContainer.appendChild(document.createTextNode(' '));
+            });
+        }
+
+        function showNotification(message, isCorrect) {
+            notification.textContent = message;
+            notification.className = `notification ${isCorrect ? 'correct' : 'incorrect'}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 1500);
+        }
+
+        updateFlashcard();
+    </script>
 </body>
 </html>
